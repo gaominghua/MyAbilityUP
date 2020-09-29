@@ -51,10 +51,10 @@ private static final Object[] EMPTY_ELEMENTDATA = {};
 private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
 transient Object[] elementData; // arrayList真正存放元素的地方，长度大于等于size
 private int size;//arrayList中的元素个数
+```
 
-
-构造器
-
+###构造器
+```java
 //无参构造器，构造一个容量大小为 10 的空的 list 集合，但构造函数只是给 elementData 赋值了一个空的数组，其实是在第一次添加元素时容量扩大至 10 的。
 public ArrayList() {
     this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
@@ -83,10 +83,11 @@ public ArrayList(Collection<? extends E> c) {
         elementData = EMPTY_ELEMENTDATA;
     }
 }
+```
 
-
-添加元素--默认尾部添加
+###添加元素--默认尾部添加
 //每次添加元素到集合中时都会先确认下集合容量大小。然后将 size 自增 1赋值
+```java
 public boolean add(E e) {
     ensureCapacityInternal(size + 1);  
     elementData[size++] = e;
@@ -128,7 +129,7 @@ public void addEffect(){
 912
 4237
 ```
-指定下标添加元素
+###指定下标添加元素
 ```java
 public void add(int index, E element) {
     rangeCheckForAdd(index);//下标越界检查
@@ -155,7 +156,7 @@ private void grow(int minCapacity) {
 }
 ```
 
-删除元素
+###删除元素
 ```java
 public E remove(int index) {
     rangeCheck(index);//首先会检查 index 是否合法
