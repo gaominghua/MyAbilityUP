@@ -194,7 +194,7 @@ private void fastRemove(int index) {
 }
 ```
 
-迭代器 iterator
+###迭代器 iterator
 ```java
 public Iterator<E> iterator() {
     return new Itr();
