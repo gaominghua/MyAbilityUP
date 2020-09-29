@@ -139,7 +139,7 @@ throws Exception {
 }
 
 }
-
-这样在我们业务中比如要记录系统日志，日志肯定是在afterCompletion之后记录的，否则中途失败了，也记录了，那就扯淡了。一定是程序正常跑完后，我们记录下那些对数据库做个增删改的操作日志进数据库。所以我们只需要继承HandlerInterceptorAdapter，并重写afterCompletion一个方法即可，因为preHandle默认是true。
+1111111111
+这样在我们业务中比如要记录系统日志，日志肯定是在afterCompletion之后记录的，否则中途失败了，也记录了，那就扯淡了。一定是程序正常跑完后，我们记录下那些对数据库做个增删改的操作日志进数据库。所以我们只需要继承HandlerInterceptorAdapter，并重写afterCompletion一个方法即可，因为preHandle默认是true。11
 ```
 ![avatar](./../picture/消息中间件-服务解耦.jpg)
