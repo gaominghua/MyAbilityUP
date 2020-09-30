@@ -1,3 +1,4 @@
+[toc]
 ###Lambda表达式
 用来替代匿名函数，可以将一个函数赋值给一个变量作为参数传入另一个函数，java的闭包
 原则：可推导就是可省略，比如说参数类型，返回值
@@ -144,10 +145,10 @@ A sequence of elements supporting sequential and parallel aggregate operations.
 - 不改变源数据
 - 延迟执行
 
-#####使用步骤：
+#####使用步骤
 创建Stream数据源；
 数据处理，转换Stream，每次转换原有Stream对象不改变，返回一个新的Stream对象（可以有多次转换）；对Stream进行聚合（Reduce）操作，获取想要的结果；
-#####创建数据源：
+#####创建数据源
 ```java
 1、Collection.stream(); 从集合获取流。
 
