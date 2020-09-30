@@ -168,3 +168,172 @@ JVM的类加载机制主要有如下3种：
 
 ##5）本地方法栈区
 - 保存native方法进入区域的地址
+
+#5.JVM中对象实例化在内存中的过程？
+**简单类对象的实例化过程：**
+1、在方法区加载类；
+2、在栈内存申请空间，声明变量P；
+3、在堆内存中开辟空间，分配对象地址；
+4、在对象空间中，对对象的属性进行默认初始化，类成员变量显示初始化；
+5、构造方法进栈，进行初始化；
+6、初始化完成后，将堆内存中的地址赋给引用变量，构造方法出栈；
+
+**子类对象的实例化过程：**
+1、在方法区先加载父类，再加载子类；
+2、在栈中申请空间，声明变量P；
+3、在堆内存中开辟空间，分配对象地址；
+4、在对象空间中，对对象的属性（包括父类的属性）进行默认初始化；
+5、子类构造方法进栈；
+6、显示初始化父类的属性；
+7、父类构造方法进栈，执行完毕出栈；
+8、显示初始化子类的属性；
+9、初始化完毕后，将堆内存中的地址值赋给引用变量P，子类构造方法出栈；
+
+#6.	堆内存为什么分为新生代老年代？
+因为以前的垃圾回收器是基于分代理念来实现的，所以在需要将对分成两个代。
+为什么新生代占堆内存1/3，老年代占2/3？
+老年代：存储大对象(对象的大小超过edlen区1/2)、经历15次GC还存在的对象、备用空间(空间担保)
+<span><div style="text-align: center;">
+![jvm-19](../picture/JVM/jvm-20.png)
+</div></span>
+因为有的对象寿命长，有的对象寿命短。应该将寿命长的对象放在一个区，寿命短的对象放在一个区。不同的区采用不同的垃圾收集算法。寿命短的区清理频次高一点，寿命长的区清理频次低一点。提高效率
+
+**为什么要有Survivor区？**
+如果没有Survivor区，那么Eden每次满了清理垃圾，存活的对象被迁移到老年区，老年区满了，就会触发Full GC，Full GC是非常耗时的
+**解决办法：**
+增加老年代内存，那么老年代清理频次减少，但清理一次花费时间更长。
+减少老年代内存，老年代一次FullGC时间更少，频率增加。
+都不行，只有再加一层Survivor。将Eden区满了的对象，添加到Survivor区，等对象反复清理几遍之后都没清理掉，再放到老年区，这样老年区的压力就会小很多。即Survivor相当于一个筛子，筛掉生命周期短的，将生命周期长的放到老年代区，减少老年代被清理的次数。
+
+#7.元空间(JAVA8)和永久代(JAVA7)的区别？
+<span><div style="text-align: center;">
+![jvm-21](../picture/JVM/jvm-21.png)
+</div></span>
+
+#8.	谈谈JVM中堆内存的理解？
+**一个jvm只有一个堆内存，堆内存的大小是可以调节的，类加载器读取了类文件后，一般会把类、方法、常量、变量保存我们所有引用类型的真实变量。**
+堆内存中细分为三个区域：
+##1.	新生区(伊甸园区、幸存0区、幸存1区) young/new
+特点：
+新生代又可以进一步划分为一个Eden区和两个Survivor区，Eden是进行内存分配的地方，是一块连续的空闲内存区域，在里面进行内存分配速度非常快，因为不需要进行可用内存块的查找。新对象总是在Eden区中生成，只有经受住了一定的考验后才能顺利的进入到Survivor区中。把Survivor区划分为2块，也是也是为了满足垃圾回收的需要，因为在新生代中经历了回收未必就能进入老年代中。系统总是把对象放在Eden区和一个Survivor区，在垃圾回收时，根据其存活时间被复制到另一个Survivor区或者老年代中，则这之前的Survivor去和Eden区中剩下的都是需要被回收的对象，只对这两个区域进行清除即可，两个Survivor区是交替使用，循环往复，在下一次垃圾回收时，之前被清除的存活区又用来放置存活下来的对象了。一般来说，年轻代区域较小，而且大部分对象是需要进行清除的，采用了"复制算法"进行垃圾回收
+
+##2.	养老区 old
+特点：
+在新生代中经历了N次回收后仍然没有被清除的对象，就会被放到老年代中，都是生命周期较长的对象。对于老年代和永久代，采用标记-整理的算法。标记的过程是找出当前还存活对对象，并进行标记；清除则是遍历整个老年区，找已经标记的对象并进行清除，然后把存活的对象移动到整个内存区的一端，使得另一端是一块连续的空间，方便进行内存分配和复制。
+
+  - Minor GC：当新对象生成，但在Eden申请空间失败时就会触发，对Eden进行GC，清除掉非存活的对象，并且把存活的对象移动到Survivor区中的其中一块。前面提到的考验就是Minor GC，也就是说对象经过了Minor GC才能够进入到存活区中。这种形式的GC只会在新生代中进行，因为大部分对象都是从Eden区开始的，同时Eden不会分配的太大，所以对Eden区的GC会非常地频繁。
+  - Full GC：对整个堆进行整理，包括了新生代老年代和永久代。Full GC要对整个块进行回收，所以要比Minor GC慢很多，因此应该尽可能的减少Full GC的次数。
+  GC垃圾回收主要是在伊甸园区和养老区。假设内存满了会抛出OOM异常，堆内存不够
+  在JDK8以后，永久存储区改名为（元空间）
+  <span><div style="text-align: center;">
+![jvm-22](../picture/JVM/jvm-22.png)
+</div></span>
+
+##3.永久区 perm
+  <span><div style="text-align: center;">
+![jvm-23](../picture/JVM/jvm-23.png)
+</div></span>
+
+#9.	谈什么是GCRoot？
+GCRoot是过一系列名为“GC Roots”的对象作为起始点，从“GC Roots”对象开始向下搜索，如果一个对象到“GC Roots”没有任何引用链相连，说明此对象可以被回收。
+<span><div style="text-align: center;">
+![jvm-24](../picture/JVM/jvm-24.png)
+</div></span>
+
+#10.谈谈JVM中的轻Minor GC、Major GC、Major GC？
+新生成的对象首先放到年轻代Eden区，当Eden空间满了，触发Minor GC，存活下来的对象移动到Survivor0区，Survivor0区满后触发执行Minor GC，Survivor0区存活对象移动到Suvivor1区，这样保证了一段时间内总有一个survivor区为空。经过多次Minor GC仍然存活的对象移动到老年代。
+老年代存储长期存活的对象，占满时会触发Major GC=Full GC，GC期间会停止所有线程等待GC完成，所以对响应要求高的应用尽量减少发生Major GC，避免响应超时。
+Minor GC ： 清理年轻代 ()
+Major GC ： 清理老年代
+Full GC ： 清理整个堆空间，包括年轻代和永久代（jdk.1,8中无永久代）
+所有GC都会停止应用所有线程
+<span><div style="text-align: center;">
+![jvm-25](../picture/JVM/jvm-25.png)
+![jvm-26](../picture/JVM/jvm-26.png)
+![jvm-27](../picture/JVM/jvm-27.png)
+![jvm-28](../picture/JVM/jvm-28.png)
+</div></span>
+
+#11.谈谈JVM中垃圾回收算法？
+##1）引用计数法
+原理：假设有一个对象A，任何一个对象对A的引用，那么对象A的引用计数器+1，当引用失败时，对象A的引用计数器就-1，如果对象A的计数器的值为0，那说明对象A没有引用了，可以被回收。
+<span><div style="text-align: center;">
+![jvm-29](../picture/JVM/jvm-29.png)
+</div></span>
+##2）复制算法(年轻代主要使用算法)
+原理：复制算法的核心就是，将原有的内存空间一分为二，每次只用其中的一块，在垃圾回收时，将正在使用的对象复制到另外一个内存空间中，然后将该内存空间清空，交换两个内存的角色，完成垃圾回收。
+优点：在垃圾对象多的情况下，效率较高。清理后，内存无碎片。
+缺点：在垃圾对象少的情况下，不适用，如：老年代内存。分配的2块内存空间，在同一个时刻，只能使用一般，内存使用率较低。
+最佳使用场景：存活度较低的地方（新生区）
+
+<span><div style="text-align: center;">
+![jvm-30](../picture/JVM/jvm-30.png)
+</div></span>
+
+-XX:MaxTenuringThreshold 设置对象在新生代中最大的存活次数,最大值15,并行回收机制默认为15,CMS默认为4。每经过一次YGC，年龄加1，当survivor区的对象年龄达到TenuringThreshold时，表示该对象是长存活对象，就会直接晋升到老年代
+
+<span><div style="text-align: center;">
+![jvm-31](../picture/JVM/jvm-31.png)
+</div></span>
+
+##3）标记清除法
+原理：
+“标记-清除”算法，如它的名字一样，算法分为“标记”和“清除”两个阶段：首先标记出所有需要回收的对象，在标记完成后统一回收掉所有被标记的对象。之所以说它是最基础的收集算法，是因为后续的收集算法都是基于这种思路并对其缺点进行改进而得到的。
+优点：不需要额外的空间；
+缺点：
+（1）效率问题：两次扫描，标记和清除过程的效率都不高；
+（2）空间问题：标记清除之后会产生大量不连续的内存碎片，空间碎片太多可能会导致，碎片过多会导致大对象无法分配到足够的连续内存，从而不得不提前触发GC。
+
+<span><div style="text-align: center;">
+![jvm-32](../picture/JVM/jvm-32.png)
+</div></span>
+
+##4）标记压缩（整理）法
+原理：根据老年代的特点，有人提出了另外一种“标记-整理”（Mark-Compact）算法，标记过程仍然与“标记-清除”算法一样，但后续步骤不是直接对可回收对象进行清理，而是让所有存活的对象都向一端移动，然后直接清理掉端边界以外的内存。
+
+<span><div style="text-align: center;">
+![jvm-33](../picture/JVM/jvm-33.png)
+![jvm-34](../picture/JVM/jvm-34.png)
+</div></span>
+
+#12.GC垃圾收集器种类
+<span><div style="text-align: center;">
+![jvm-35](../picture/JVM/jvm-35.png)
+![jvm-36](../picture/JVM/jvm-36.png)
+![jvm-37](../picture/JVM/jvm-37.png)
+![jvm-38](../picture/JVM/jvm-38.png)
+![jvm-39](../picture/JVM/jvm-39.png)
+![jvm-40](../picture/JVM/jvm-40.png)
+![jvm-41](../picture/JVM/jvm-41.png)
+![jvm-42](../picture/JVM/jvm-42.png)
+![jvm-43](../picture/JVM/jvm-43.png)
+![jvm-44](../picture/JVM/jvm-44.png)
+![jvm-45](../picture/JVM/jvm-45.png)
+![jvm-46](../picture/JVM/jvm-46.png)
+![jvm-47](../picture/JVM/jvm-47.png)
+![jvm-48](../picture/JVM/jvm-48.png)
+![jvm-49](../picture/JVM/jvm-49.png)
+![jvm-50](../picture/JVM/jvm-50.png)
+![jvm-51](../picture/JVM/jvm-51.png)
+![jvm-52](../picture/JVM/jvm-52.png)
+![jvm-53](../picture/JVM/jvm-53.png)
+
+</div></span>
+
+#13.什么是G1垃圾收集器？
+G1垃圾收集器：整体上采用标记-整理算法、局部采用复制算法不会产生内存碎片
+<span><div style="text-align: center;">
+![jvm-54](../picture/JVM/jvm-54.png)
+![jvm-55](../picture/JVM/jvm-55.png)
+![jvm-56](../picture/JVM/jvm-56.png)
+![jvm-57](../picture/JVM/jvm-57.png)
+![jvm-58](../picture/JVM/jvm-58.png)
+![jvm-59](../picture/JVM/jvm-59.png)
+![jvm-60](../picture/JVM/jvm-60.png)
+</div></span>
+
+G1垃圾收集器的四个步骤：
+<span><div style="text-align: center;">
+![jvm-61](../picture/JVM/jvm-61.png)
+![jvm-62](../picture/JVM/jvm-62.png)
+</div></span>
